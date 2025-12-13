@@ -3,7 +3,6 @@ const url = require('url');
 
 // ==================== CONFIG =====================
 const YOUR_API_KEYS = ["GOKU"];
-const TARGET_API = "https://ox-tawny.vercel.app/search_mobile";
 // =================================================
 
 const server = http.createServer(async (req, res) => {
@@ -11,13 +10,13 @@ const server = http.createServer(async (req, res) => {
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
 
     const parsedUrl = url.parse(req.url, true);
-    const { mobile, key, api_key } = parsedUrl.query;
+    const { num, key, api_key } = parsedUrl.query;
 
     // Parameter check
-    if (!mobile) {
+    if (!num) {
         return res.end(JSON.stringify({ 
-            error: 'Missing mobile parameter',
-            usage: '?mobile=9876543210&key=GOKU'
+            error: 'Missing number parameter',
+            usage: '?num=9876543210&key=GOKU'
         }));
     }
 
@@ -29,7 +28,17 @@ const server = http.createServer(async (req, res) => {
 
     try {
         const fetch = (await import('node-fetch')).default;
-        const response = await fetch(`${TARGET_API}?mobile=${encodeURIComponent(mobile)}&api_key=gavravrandigey`);
+        const targetUrl = `https://numapi.anshapi.workers.dev/?num=${encodeURIComponent(num)}`;
+        
+        console.log(`🌐 Fetching data from: ${targetUrl}`);
+        
+        const response = await fetch(targetUrl, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'Accept': 'application/json'
+            },
+            timeout: 10000
+        });
 
         if (!response.ok) {
             throw new Error(`API failed with status: ${response.status}`);
@@ -42,21 +51,30 @@ const server = http.createServer(async (req, res) => {
             ...data,
             credit_by: "goku",
             developer: "@gokuuuu_1",
-            powered_by: "Goku Info API"
+            powered_by: "Goku Number Info API",
+            source_api: "https://numapi.anshapi.workers.dev",
+            query_number: num,
+            timestamp: new Date().toISOString()
         };
 
         res.end(JSON.stringify(finalData));
 
     } catch (error) {
+        console.error('❌ Error:', error.message);
         res.end(JSON.stringify({
             error: 'Request failed',
             details: error.message,
-            credit_by: "goku"
+            credit_by: "goku",
+            developer: "@gokuuuu_1",
+            query_number: num
         }));
     }
 });
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-    console.log(`🚀 Goku Info API running on port ${PORT}`);
+    console.log(`🚀 Goku Number Info API running on port ${PORT}`);
+    console.log(`📡 API Source: https://numapi.anshapi.workers.dev/?num={number}`);
+    console.log(`📋 Usage: http://localhost:${PORT}/?num=9876543210`);
+    console.log(`🔑 Optional API Key: ?num=9876543210&key=GOKU`);
 });
